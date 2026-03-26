@@ -10,9 +10,55 @@ type Countdown = {
   seconds: number;
 };
 
+type ReflectionItem = {
+  kind: "Doa" | "Al-Qur'an";
+  title: string;
+  arabic?: string;
+  latin?: string;
+  translation: string;
+  source: string;
+};
+
 const TARGET_ISO = "2027-02-08T00:00:00+07:00";
 const RAMADHAN_2027 = new Date(TARGET_ISO).getTime();
 const START_TRACKING = new Date("2026-03-25T00:00:00+07:00").getTime();
+const REFLECTION_INTERVAL = 8000;
+
+const REFLECTIONS: ReflectionItem[] = [
+  {
+    kind: "Doa",
+    title: "Doa menyambut Ramadhan",
+    arabic: "اللَّهُمَّ بَارِكْ لَنَا فِي رَجَبَ وَشَعْبَانَ وَبَلِّغْنَا رَمَضَانَ",
+    latin: "Allahumma barik lana fi Rajaba wa Sya'bana wa ballighna Ramadhan.",
+    translation:
+      "Ya Allah, berkahilah kami di bulan Rajab dan Sya'ban, dan sampaikanlah kami ke bulan Ramadhan.",
+    source: "Doa masyhur menyambut Ramadhan",
+  },
+  {
+    kind: "Al-Qur'an",
+    title: "Tentang turunnya Al-Qur'an di bulan Ramadhan",
+    arabic: "شَهْرُ رَمَضَانَ الَّذِي أُنزِلَ فِيهِ الْقُرْآنُ هُدًى لِّلنَّاسِ",
+    translation:
+      "Bulan Ramadhan adalah bulan yang di dalamnya diturunkan Al-Qur'an sebagai petunjuk bagi manusia.",
+    source: "QS. Al-Baqarah: 185",
+  },
+  {
+    kind: "Al-Qur'an",
+    title: "Tentang ketenangan dengan mengingat Allah",
+    arabic: "أَلَا بِذِكْرِ اللَّهِ تَطْمَئِنُّ الْقُلُوبُ",
+    translation:
+      "Ingatlah, hanya dengan mengingat Allah hati menjadi tenteram.",
+    source: "QS. Ar-Ra'd: 28",
+  },
+  {
+    kind: "Al-Qur'an",
+    title: "Tentang kemudahan setelah kesulitan",
+    arabic: "فَإِنَّ مَعَ الْعُسْرِ يُسْرًا • إِنَّ مَعَ الْعُسْرِ يُسْرًا",
+    translation:
+      "Maka sesungguhnya bersama kesulitan ada kemudahan. Sesungguhnya bersama kesulitan ada kemudahan.",
+    source: "QS. Al-Insyirah: 5-6",
+  },
+];
 
 function getCountdown(target: number): Countdown {
   const total = target - Date.now();
@@ -95,6 +141,7 @@ function Ornament() {
 export default function Home() {
   const [countdown, setCountdown] = useState<Countdown>(() => getCountdown(RAMADHAN_2027));
   const [jakartaNow, setJakartaNow] = useState("");
+  const [reflectionIndex, setReflectionIndex] = useState(0);
 
   useEffect(() => {
     setJakartaNow(getNowInJakarta());
@@ -105,6 +152,14 @@ export default function Home() {
     }, 1000);
 
     return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    const reflectionTimer = setInterval(() => {
+      setReflectionIndex((prev) => (prev + 1) % REFLECTIONS.length);
+    }, REFLECTION_INTERVAL);
+
+    return () => clearInterval(reflectionTimer);
   }, []);
 
   const progress = useMemo(() => {
@@ -118,6 +173,7 @@ export default function Home() {
   const targetGregorian = useMemo(() => formatGregorianDate(targetDate), [targetDate]);
   const targetHijri = useMemo(() => formatHijriDate(targetDate), [targetDate]);
   const todayHijri = useMemo(() => formatHijriDate(new Date()), []);
+  const activeReflection = REFLECTIONS[reflectionIndex];
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#04110d] text-white">
@@ -196,7 +252,7 @@ export default function Home() {
                 <div className="mb-6 flex items-center justify-between">
                   <div>
                     <p className="text-sm uppercase tracking-[0.35em] text-emerald-200/70">Target</p>
-                    <h2 className="mt-2 text-2xl font-bold text-white">1 Ramadhan 1448 H</h2>
+                    <h2 className="mt-2 text-2xl font-bold text-white">{targetHijri}</h2>
                   </div>
                   <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-white/15 bg-white/10 text-3xl shadow-[0_0_30px_rgba(253,224,71,0.18)]">
                     🕌
@@ -219,14 +275,58 @@ export default function Home() {
                     </p>
                   </div>
                 </div>
-
-                <div className="mt-8 rounded-2xl border border-emerald-200/15 bg-emerald-300/10 p-5 text-sm leading-7 text-emerald-50/80">
-                  “Ya Allah, berkahilah kami di bulan Rajab dan Sya'ban, dan sampaikanlah kami ke bulan Ramadhan.”
-                </div>
               </div>
             </div>
           </div>
         </div>
+
+        <section className="relative mt-12 max-w-5xl">
+          <div className="overflow-hidden rounded-[2rem] border border-white/15 bg-white/10 p-6 shadow-[0_20px_80px_rgba(0,0,0,0.25)] backdrop-blur-2xl md:p-8">
+            <div className="mb-5 flex items-center justify-between gap-4">
+              <div>
+                <p className="text-sm uppercase tracking-[0.35em] text-emerald-200/70">Refleksi otomatis</p>
+                <h3 className="mt-2 text-2xl font-bold text-white">Doa & quote Al-Qur'an</h3>
+              </div>
+              <div className="flex gap-2">
+                {REFLECTIONS.map((item, index) => (
+                  <span
+                    key={`${item.title}-${index}`}
+                    className={`h-2.5 w-2.5 rounded-full transition ${
+                      index === reflectionIndex ? "bg-emerald-300 shadow-[0_0_16px_rgba(110,231,183,0.9)]" : "bg-white/20"
+                    }`}
+                  />
+                ))}
+              </div>
+            </div>
+
+            <div className="rounded-[1.75rem] border border-white/10 bg-black/10 p-6 transition duration-500">
+              <div className="mb-4 inline-flex rounded-full border border-emerald-200/20 bg-emerald-300/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-emerald-100/80">
+                {activeReflection.kind}
+              </div>
+              <h4 className="text-xl font-bold text-white md:text-2xl">{activeReflection.title}</h4>
+
+              {activeReflection.arabic ? (
+                <p className="mt-5 text-right text-2xl leading-[2.2] text-emerald-50 md:text-3xl">
+                  {activeReflection.arabic}
+                </p>
+              ) : null}
+
+              {activeReflection.latin ? (
+                <p className="mt-4 italic leading-8 text-emerald-100/75">
+                  {activeReflection.latin}
+                </p>
+              ) : null}
+
+              <p className="mt-5 max-w-3xl text-base leading-8 text-emerald-50/85 md:text-lg">
+                {activeReflection.translation}
+              </p>
+
+              <div className="mt-6 border-t border-white/10 pt-4 text-sm text-emerald-100/65">
+                {activeReflection.source}
+              </div>
+            </div>
+          </div>
+        </section>
       </section>
     </main>
   );
