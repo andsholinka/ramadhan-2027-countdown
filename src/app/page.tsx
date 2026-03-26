@@ -39,7 +39,7 @@ function formatGregorianDate(date: Date) {
 }
 
 function formatHijriDate(date: Date) {
-  return new Intl.DateTimeFormat("id-ID-u-ca-islamic", {
+  return new Intl.DateTimeFormat("id-ID-u-ca-islamic-umalqura", {
     day: "numeric",
     month: "long",
     year: "numeric",
