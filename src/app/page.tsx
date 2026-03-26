@@ -23,6 +23,7 @@ const TARGET_ISO = "2027-02-08T00:00:00+07:00";
 const RAMADHAN_2027 = new Date(TARGET_ISO).getTime();
 const START_TRACKING = new Date("2026-03-25T00:00:00+07:00").getTime();
 const REFLECTION_INTERVAL = 8000;
+const FADE_DURATION = 250;
 
 const REFLECTIONS: ReflectionItem[] = [
   {
@@ -46,8 +47,7 @@ const REFLECTIONS: ReflectionItem[] = [
     kind: "Al-Qur'an",
     title: "Tentang ketenangan dengan mengingat Allah",
     arabic: "أَلَا بِذِكْرِ اللَّهِ تَطْمَئِنُّ الْقُلُوبُ",
-    translation:
-      "Ingatlah, hanya dengan mengingat Allah hati menjadi tenteram.",
+    translation: "Ingatlah, hanya dengan mengingat Allah hati menjadi tenteram.",
     source: "QS. Ar-Ra'd: 28",
   },
   {
@@ -142,6 +142,7 @@ export default function Home() {
   const [countdown, setCountdown] = useState<Countdown>(() => getCountdown(RAMADHAN_2027));
   const [jakartaNow, setJakartaNow] = useState("");
   const [reflectionIndex, setReflectionIndex] = useState(0);
+  const [isReflectionVisible, setIsReflectionVisible] = useState(true);
 
   useEffect(() => {
     setJakartaNow(getNowInJakarta());
@@ -154,13 +155,21 @@ export default function Home() {
     return () => clearInterval(timer);
   }, []);
 
+  const changeReflection = (nextIndex: number) => {
+    setIsReflectionVisible(false);
+    window.setTimeout(() => {
+      setReflectionIndex((nextIndex + REFLECTIONS.length) % REFLECTIONS.length);
+      setIsReflectionVisible(true);
+    }, FADE_DURATION);
+  };
+
   useEffect(() => {
     const reflectionTimer = setInterval(() => {
-      setReflectionIndex((prev) => (prev + 1) % REFLECTIONS.length);
+      changeReflection(reflectionIndex + 1);
     }, REFLECTION_INTERVAL);
 
     return () => clearInterval(reflectionTimer);
-  }, []);
+  }, [reflectionIndex]);
 
   const progress = useMemo(() => {
     const totalRange = RAMADHAN_2027 - START_TRACKING;
@@ -287,19 +296,46 @@ export default function Home() {
                 <p className="text-sm uppercase tracking-[0.35em] text-emerald-200/70">Refleksi otomatis</p>
                 <h3 className="mt-2 text-2xl font-bold text-white">Doa & quote Al-Qur'an</h3>
               </div>
-              <div className="flex gap-2">
-                {REFLECTIONS.map((item, index) => (
-                  <span
-                    key={`${item.title}-${index}`}
-                    className={`h-2.5 w-2.5 rounded-full transition ${
-                      index === reflectionIndex ? "bg-emerald-300 shadow-[0_0_16px_rgba(110,231,183,0.9)]" : "bg-white/20"
-                    }`}
-                  />
-                ))}
+              <div className="flex items-center gap-3">
+                <div className="flex gap-2">
+                  {REFLECTIONS.map((item, index) => (
+                    <button
+                      key={`${item.title}-${index}`}
+                      type="button"
+                      aria-label={`Pilih refleksi ${index + 1}`}
+                      onClick={() => changeReflection(index)}
+                      className={`h-2.5 w-2.5 rounded-full transition ${
+                        index === reflectionIndex
+                          ? "bg-emerald-300 shadow-[0_0_16px_rgba(110,231,183,0.9)]"
+                          : "bg-white/20 hover:bg-white/40"
+                      }`}
+                    />
+                  ))}
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => changeReflection(reflectionIndex - 1)}
+                    className="rounded-full border border-white/15 bg-white/10 px-3 py-2 text-sm font-semibold text-emerald-50 transition hover:bg-white/15"
+                  >
+                    ← Prev
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => changeReflection(reflectionIndex + 1)}
+                    className="rounded-full border border-white/15 bg-white/10 px-3 py-2 text-sm font-semibold text-emerald-50 transition hover:bg-white/15"
+                  >
+                    Next →
+                  </button>
+                </div>
               </div>
             </div>
 
-            <div className="rounded-[1.75rem] border border-white/10 bg-black/10 p-6 transition duration-500">
+            <div
+              className={`rounded-[1.75rem] border border-white/10 bg-black/10 p-6 transition-all duration-300 ${
+                isReflectionVisible ? "translate-y-0 opacity-100" : "translate-y-2 opacity-0"
+              }`}
+            >
               <div className="mb-4 inline-flex rounded-full border border-emerald-200/20 bg-emerald-300/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-emerald-100/80">
                 {activeReflection.kind}
               </div>
@@ -312,9 +348,7 @@ export default function Home() {
               ) : null}
 
               {activeReflection.latin ? (
-                <p className="mt-4 italic leading-8 text-emerald-100/75">
-                  {activeReflection.latin}
-                </p>
+                <p className="mt-4 italic leading-8 text-emerald-100/75">{activeReflection.latin}</p>
               ) : null}
 
               <p className="mt-5 max-w-3xl text-base leading-8 text-emerald-50/85 md:text-lg">
